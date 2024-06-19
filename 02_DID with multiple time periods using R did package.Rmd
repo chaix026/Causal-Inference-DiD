@@ -1,0 +1,124 @@
+---
+title: "02_Using R did package"
+author: "YC"
+date: "2024-06-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Using the did package in R
+
+Following the example vignette provided by the [did package user guide](https://bcallaway11.github.io/did/articles/did-basics.html) to explore the use of this package to conduct did analysis.
+
+```{r}
+library(did)
+library(ggplot2)
+```
+
+
+### Example dataset
+
+Simulate a dataset with 4 time periods with both treatment and control groups as following:
+
+```{r}
+# set seed
+set.seed(1814)
+
+# 4 time periods
+time.periods = 4
+
+# add dynamic effects
+sp = reset.sim(time.periods, n=4000, ipw=F, reg=F)
+sp$te.e = 1:time.periods
+
+# generate data
+dta = build_sim_dataset(sp)
+
+# dat quick view
+head(dta)
+
+```
+#### Plot the data
+
+```{r}
+
+ggplot(data=dta) +
+  geom_jitter(aes(x=period+G/10, y=Y, color=as.factor(G)))+
+  theme_bw()
+  
+
+```
+
+
+### Estimating Group-Time Average Treatment Effects
+
+```{r}
+# estimate group-time average treatment effects using att_gt method
+example_attgt = att_gt(yname = "Y",
+                        tname = "period",
+                        idname = "id",
+                        gname = "G",
+                        xformla = ~X,
+                        data = dta
+                        )
+
+# summarize the results
+summary(example_attgt)
+
+```
+
+### Plot the group-time average treatment effects
+
+```{r}
+# plot the results
+ggdid(example_attgt)
+
+```
+
+
+
+### Aggregating group-time ATE
+
+##### Simple Aggregation
+
+```{r}
+agg.simple <- aggte(example_attgt, type = "simple")
+summary(agg.simple)
+```
+##### Dynamic effects and Event Studies
+
+```{r}
+agg.es <- aggte(example_attgt, type = "dynamic")
+summary(agg.es)
+
+```
+
+```{r}
+ggdid(agg.es)
+
+```
+
+
+##### Group specific effects
+
+```{r}
+agg.gs <- aggte(example_attgt, type = "group")
+summary(agg.gs)
+ggdid(agg.gs)
+```
+
+##### Calendar Time effects
+
+```{r}
+agg.ct <- aggte(example_attgt, type = "calendar")
+summary(agg.ct)
+ggdid(agg.ct)
+```
+
+
+
